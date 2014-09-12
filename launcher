@@ -1,0 +1,68 @@
+#! /bin/sh
+
+set -e
+
+VOLUMES="-v $(pwd)/data:/data"
+VOLUMES="${VOLUMES} -v $(pwd)/image:/image"
+VOLUMES="${VOLUMES} -v $(pwd)/data/log:/var/log"
+
+enter() {
+    pid=$(docker inspect --format {{.State.Pid}} `cat cid`)
+    exec ${SUDO} nsenter --target $pid --mount --uts --ipc --net --pid "$@"
+}
+
+start() {
+
+    if [ -e cid ]; then
+	if ! docker ps --no-trunc -q | grep -q $(cat cid); then
+	    echo "Removing stale cid."
+	    rm -f cid
+	else
+	    echo "error: container appears to be running."
+	    exit 1
+	fi
+    fi
+
+    test -e data || mkdir data
+    docker run --rm --cidfile=cid --net=host -i -t ${PORTS} ${VOLUMES} \
+	jasonish/suricata-elk "$@"
+    rm -f cid
+}
+
+usage() {
+    echo "Usage: launcher <command> [args]"
+    echo
+    echo "Commands:"
+    echo
+    echo "  start [-i interface]    Start the container"
+    echo "  enter                   Get a shell in the running container"
+    echo "  bash                    Start the container with a shell"
+    echo
+}
+
+case "$1" in
+
+    start)
+	shift
+	start "$@"
+	;;
+
+    bash)
+	docker run --rm --entrypoint=/bin/bash \
+	    --net=host -i -t ${PORTS} ${VOLUMES} \
+	    jasonish/suricata-elk
+	;;
+
+    enter)
+	enter
+	;;
+
+    supervisorctl)
+	enter supervisorctl
+	;;
+
+    *)
+	usage
+	;;
+
+esac
