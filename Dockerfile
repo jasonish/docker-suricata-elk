@@ -2,7 +2,7 @@ FROM centos:centos7
 
 # Download our dependencies so they get cached early.
 RUN cd /tmp && \
-    curl -O http://mirror.chpc.utah.edu/pub/epel/7/x86_64/e/epel-release-7-1.noarch.rpm && \
+    curl -O http://mirror.chpc.utah.edu/pub/epel/7/x86_64/e/epel-release-7-2.noarch.rpm && \
     curl -O http://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.3.2.tar.gz && \
     curl -O http://download.elasticsearch.org/logstash/logstash/logstash-1.4.2.tar.gz && \
     curl -O http://download.elasticsearch.org/kibana/kibana/kibana-3.1.0.tar.gz && \
@@ -10,7 +10,7 @@ RUN cd /tmp && \
       http://download.oracle.com/otn-pub/java/jdk/8u20-b26/jre-8u20-linux-x64.rpm
 
 # Install EPEL.
-RUN yum -y localinstall /tmp/epel-release-7-1.noarch.rpm
+RUN yum -y localinstall /tmp/epel-release-7-2.noarch.rpm
 
 # The EPEL mirrorlist was broken when I wrote this Dockerfile.
 RUN sed -i "s/#baseurl/baseurl/" /etc/yum.repos.d/epel.repo && \
