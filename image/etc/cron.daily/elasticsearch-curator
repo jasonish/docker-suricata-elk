@@ -1,0 +1,8 @@
+#! /bin/sh
+
+DELETE_OLDER_THAN=7
+OPTIMIZE_OLDER_THAN=1
+
+curator delete --older-than ${DELETE_OLDER_THAN}
+curator optimize --older-than ${OPTIMIZE_OLDER_THAN}
+

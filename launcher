@@ -25,6 +25,7 @@ start() {
 
     test -e data || mkdir data
     docker run --rm --cidfile=cid --net=host -i -t ${PORTS} ${VOLUMES} \
+	-e HOST_UID=$(id -u) \
 	jasonish/suricata-elk "$@"
     rm -f cid
 }
