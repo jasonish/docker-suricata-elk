@@ -80,22 +80,21 @@ RUN cd /usr/local/src && \
     curl -O http://www.inliniac.net/files/NetFlow.json
 
 # EveBox.
-RUN cd /usr/local/src && \
-    git clone https://github.com/jasonish/evebox.git && \
-    cp -a /usr/local/src/evebox/app /srv/evebox
+RUN mkdir -p /usr/local/src/evebox && \
+    cd /usr/local/src/evebox && \
+    curl -L -o - https://github.com/jasonish/evebox/archive/cc3bf99a7023b5bda047944aead2de03c021ed57.tar.gz | tar zxf - --strip-components=1 && \
+    cp -a app /srv/evebox
 
-# Build and install Suricata.
+ # Build and install Suricata.
 RUN cd /usr/local/src && \
-    git clone https://github.com/inliniac/suricata.git && \
-    cd suricata && \
-    git clone https://github.com/ironbee/libhtp.git && \
-    cd /usr/local/src/suricata && \
-    ./autogen.sh && \
+    curl -O -L http://www.openinfosecfoundation.org/download/suricata-2.1beta2.tar.gz
+RUN cd /usr/local/src && \
+    tar zxvf suricata-2.1beta2.tar.gz && \
+    cd suricata-2.1beta2 && \
     ./configure --disable-gccmarch-native && \
-    cd /usr/local/src/suricata && \
     make && \
     make install && \
-    cd /usr/local/src/suricata && make install-full
+    make install-full
 
 # Copy in the Suricata logrotate configuration.
 COPY image/etc/logrotate.d/suricata /etc/logrotate.d/suricata
@@ -104,9 +103,13 @@ RUN chmod 644 /etc/logrotate.d/suricata
 # Make logrotate run hourly.
 RUN mv /etc/cron.daily/logrotate /etc/cron.hourly/logrotate
 
-# Setup minimal web site.
+# # Setup minimal web site.
+# RUN cd /srv && \
+#     curl -O \
+#     https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css
 RUN cd /srv && \
-    curl -O http://bootswatch.com/slate/bootstrap.min.css && true
+    curl -O \
+    http://bootswatch.com/slate/bootstrap.min.css
 
 # Install Elastic Search curator for optimizing and purging events.
 RUN pip install elasticsearch-curator
