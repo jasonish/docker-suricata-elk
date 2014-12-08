@@ -6,6 +6,12 @@ VOLUMES="-v $(pwd)/data:/data"
 VOLUMES="${VOLUMES} -v $(pwd)/image:/image"
 VOLUMES="${VOLUMES} -v $(pwd)/data/log:/var/log"
 
+use_privileged() {
+    if [ "$(getenforce 2>/dev/null)" = "Enforcing" ]; then
+	printf -- "--privileged"
+    fi
+}
+
 enter() {
     pid=$(docker inspect --format {{.State.Pid}} `cat cid`)
     exec ${SUDO} nsenter --target $pid --mount --uts --ipc --net --pid "$@"
@@ -24,7 +30,9 @@ start() {
     fi
 
     test -e data || mkdir data
-    docker run --rm --cidfile=cid --net=host -i -t ${PORTS} ${VOLUMES} \
+    docker run \
+	$(use_privileged) --rm --cidfile=cid --net=host -i -t ${PORTS} \
+	${VOLUMES} \
 	-e HOST_UID=$(id -u) \
 	jasonish/suricata-elk "$@"
     rm -f cid
