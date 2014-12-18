@@ -8,11 +8,7 @@ RUN cd /tmp && \
       http://download.oracle.com/otn-pub/java/jdk/8u20-b26/jre-8u20-linux-x64.rpm
 
 # Install EPEL.
-RUN rpm -Uvh http://mirror.chpc.utah.edu/pub/epel/7/x86_64/e/epel-release-7-2.noarch.rpm
-
-# The EPEL mirrorlist was broken when I wrote this Dockerfile.
-RUN sed -i "s/#baseurl/baseurl/" /etc/yum.repos.d/epel.repo && \
-    sed -i "s/mirrorlist/#mirrorlist/" /etc/yum.repos.d/epel.repo
+RUN yum -y install epel-release
 
 RUN yum clean all && \
     yum -y update && \
@@ -61,13 +57,13 @@ RUN cd /opt && \
 # Kibana
 RUN cd /tmp && \
     curl \
-      -O http://download.elasticsearch.org/kibana/kibana/kibana-3.1.1.tar.gz
+      -O http://download.elasticsearch.org/kibana/kibana/kibana-3.1.2.tar.gz
 RUN printf "/listen\ns/80/7777/\n.\nw\n" | \
       ed /etc/nginx/nginx.conf && \
     printf "/listen\n/root\nd\ni\n\troot /srv;\n.\nw\n" | \
       ed /etc/nginx/nginx.conf && \
     mkdir /srv/kibana && \
-    cd /srv/kibana && tar zxvf /tmp/kibana-3.1.1.tar.gz --strip-components=1
+    cd /srv/kibana && tar zxvf /tmp/kibana-3.1.2.tar.gz --strip-components=1
 
 # Extra Kibana templates.
 RUN cd /usr/local/src && \
@@ -82,7 +78,7 @@ RUN cd /usr/local/src && \
 # EveBox.
 RUN mkdir -p /usr/local/src/evebox && \
     cd /usr/local/src/evebox && \
-    curl -L -o - https://github.com/jasonish/evebox/archive/cc3bf99a7023b5bda047944aead2de03c021ed57.tar.gz | tar zxf - --strip-components=1 && \
+    curl -L -o - https://github.com/jasonish/evebox/archive/02bed2fcecb6e645919aceee398ef22de14d865d.tar.gz | tar zxf - --strip-components=1 && \
     cp -a app /srv/evebox
 
  # Build and install Suricata.
@@ -103,13 +99,9 @@ RUN chmod 644 /etc/logrotate.d/suricata
 # Make logrotate run hourly.
 RUN mv /etc/cron.daily/logrotate /etc/cron.hourly/logrotate
 
-# # Setup minimal web site.
-# RUN cd /srv && \
-#     curl -O \
-#     https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css
+# Setup minimal web site.
 RUN cd /srv && \
-    curl -O \
-    http://bootswatch.com/slate/bootstrap.min.css
+    curl -O -L -# http://bootswatch.com/slate/bootstrap.min.css
 
 # Install Elastic Search curator for optimizing and purging events.
 RUN pip install elasticsearch-curator
