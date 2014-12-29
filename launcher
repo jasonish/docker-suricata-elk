@@ -2,6 +2,8 @@
 
 set -e
 
+TAG="jasonish/suricata-elk"
+
 VOLUMES="-v $(pwd)/data:/data"
 VOLUMES="${VOLUMES} -v $(pwd)/image:/image"
 VOLUMES="${VOLUMES} -v $(pwd)/data/log:/var/log"
@@ -38,6 +40,10 @@ start() {
     rm -f cid
 }
 
+pull() {
+    docker pull ${TAG}
+}
+
 usage() {
     echo "Usage: launcher <command> [args]"
     echo
@@ -46,6 +52,7 @@ usage() {
     echo "  start [-i interface]    Start the container"
     echo "  enter                   Get a shell in the running container"
     echo "  bash                    Start the container with a shell"
+    echo "  pull                    Update the image"
     echo
 }
 
@@ -68,6 +75,10 @@ case "$1" in
 
     supervisorctl)
 	enter supervisorctl
+	;;
+
+    pull)
+	pull
 	;;
 
     *)

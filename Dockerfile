@@ -15,28 +15,13 @@ RUN yum clean all && \
     yum -y install \
 	cronie \
 	logrotate \
-    	ed \
+	ed \
 	tar \
 	tcpdump \
 	python-pip \
 	nginx \
-	git \
-	gcc \
-	automake \
-	autoconf \
-	make \
-	libyaml-devel \
-	libjansson-devel \
-	nss-devel \
-	nspr-devel \
-	pcre-devel \
-	file-devel \
-	libpcap-devel \
 	python-simplejson \
-	zlib-devel \
-	libtool \
-	jansson-devel \
-	lua-devel
+
 RUN pip install supervisor
 
 # Create a user to run non-root applications.
@@ -67,12 +52,12 @@ RUN printf "/listen\ns/80/7777/\n.\nw\n" | \
 
 # Extra Kibana templates.
 RUN cd /usr/local/src && \
-    git clone https://github.com/pevma/Suricata-Logstash-Templates.git && \
-    cd Suricata-Logstash-Templates/Templates && \
+    curl -o - -L https://github.com/pevma/Suricata-Logstash-Templates/archive/master.tar.gz | tar zxvf - && \
+    cd Suricata-Logstash-Templates-master/Templates && \
     for template in *; do \
       cp $template /srv/kibana/app/dashboards/$template.json; \
-    done && \
-    cd /srv/kibana/app/dashboards && \
+    done
+RUN cd /srv/kibana/app/dashboards && \
     curl -O http://www.inliniac.net/files/NetFlow.json
 
 # EveBox.
@@ -81,16 +66,11 @@ RUN mkdir -p /usr/local/src/evebox && \
     curl -L -o - https://github.com/jasonish/evebox/archive/02bed2fcecb6e645919aceee398ef22de14d865d.tar.gz | tar zxf - --strip-components=1 && \
     cp -a app /srv/evebox
 
- # Build and install Suricata.
-RUN cd /usr/local/src && \
-    curl -O -L http://www.openinfosecfoundation.org/download/suricata-2.1beta2.tar.gz
-RUN cd /usr/local/src && \
-    tar zxvf suricata-2.1beta2.tar.gz && \
-    cd suricata-2.1beta2 && \
-    ./configure --disable-gccmarch-native && \
-    make && \
-    make install && \
-    make install-full
+RUN rpm -Uvh http://codemonkey.net/files/rpm/suricata-beta/el7/suricata-beta-release-el-7-1.el7.noarch.rpm
+RUN yum -y install suricata
+
+RUN cd /etc/suricata && \
+    curl -L -o - http://rules.emergingthreats.net/open/suricata-2.0/emerging.rules.tar.gz | tar zxvf -
 
 # Copy in the Suricata logrotate configuration.
 COPY image/etc/logrotate.d/suricata /etc/logrotate.d/suricata
@@ -108,6 +88,7 @@ RUN pip install elasticsearch-curator
 COPY image/etc/cron.daily/elasticsearch-curator /etc/cron.daily/
 
 # Link in files that are maintained outside of the container.
+RUN rm -f /etc/supervisord.conf
 RUN ln -s /image/etc/supervisord.conf /etc/supervisord.conf && \
     ln -s /image/etc/supervisord.d /etc/supervisord.d && \
     ln -s /image/start.sh /start.sh && \

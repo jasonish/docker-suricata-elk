@@ -2,7 +2,7 @@
 ---
 
 # Include the default configuration file.
-include: /usr/local/etc/suricata/suricata.yaml
+include: /etc/suricata/suricata.yaml
 
 # Overrides for this Docker container.
 
