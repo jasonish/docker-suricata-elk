@@ -63,7 +63,7 @@ RUN cd /srv/kibana/app/dashboards && \
 # EveBox.
 RUN mkdir -p /usr/local/src/evebox && \
     cd /usr/local/src/evebox && \
-    curl -L -o - https://github.com/jasonish/evebox/archive/02bed2fcecb6e645919aceee398ef22de14d865d.tar.gz | tar zxf - --strip-components=1 && \
+    curl -L -o - https://github.com/jasonish/evebox/archive/8b651b344681668d9e86ba052d30a8d56bede1df.tar.gz | tar zxf - --strip-components=1 && \
     cp -a app /srv/evebox
 
 RUN rpm -Uvh http://codemonkey.net/files/rpm/suricata-beta/el7/suricata-beta-release-el-7-1.el7.noarch.rpm
