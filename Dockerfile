@@ -1,11 +1,16 @@
 FROM centos:centos7
 
-# Download our dependencies so they get cached early.
-RUN cd /tmp && \
-    curl -O http://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.3.2.tar.gz && \
-    curl -O http://download.elasticsearch.org/logstash/logstash/logstash-1.4.2.tar.gz && \
-    curl -v -O -L -b "oraclelicense=accept-securebackup-cookie" \
-      http://download.oracle.com/otn-pub/java/jdk/8u20-b26/jre-8u20-linux-x64.rpm
+RUN curl -v -o /tmp/elasticsearch.tar.gz -L \
+    http://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.4.4.tar.gz
+
+RUN curl -v -o /tmp/jre.rpm -L -b "oraclelicense=accept-securebackup-cookie" \
+    http://download.oracle.com/otn-pub/java/jdk/8u20-b26/jre-8u20-linux-x64.rpm
+
+RUN curl -L -v -o /tmp/kibana.tar.gz \
+    http://download.elasticsearch.org/kibana/kibana/kibana-3.1.2.tar.gz
+
+RUN curl -L -v -o /tmp/logstash.tar.gz \
+    http://download.elasticsearch.org/logstash/logstash/logstash-1.4.2.tar.gz
 
 # Install EPEL.
 RUN yum -y install epel-release
@@ -21,6 +26,7 @@ RUN yum clean all && \
 	python-pip \
 	nginx \
 	python-simplejson \
+	wget
 
 RUN pip install supervisor
 
@@ -28,27 +34,21 @@ RUN pip install supervisor
 RUN useradd user
 
 # Install the Oracle JRE.
-RUN yum -y localinstall /tmp/jre-8u20-linux-x64.rpm
+RUN yum -y localinstall /tmp/jre.rpm
 
 # Install Elastic Search.
-RUN cd /opt && \
-    tar zxvf /tmp/elasticsearch-1.3.2.tar.gz
+RUN mkdir -p /opt/elasticsearch && \
+    cd /opt/elasticsearch && \
+    tar zxvf /tmp/elasticsearch.tar.gz --strip-components=1
 
 # Install Logstash.
-RUN cd /opt && \
-    tar zxvf /tmp/logstash-1.4.2.tar.gz && \
-    ln -s logstash-1.4.2 /opt/logstash
+RUN mkdir -p /opt/logstash && \
+    cd /opt/logstash && \
+    tar zxvf /tmp/logstash.tar.gz --strip-components=1
 
-# Kibana
-RUN cd /tmp && \
-    curl \
-      -O http://download.elasticsearch.org/kibana/kibana/kibana-3.1.2.tar.gz
-RUN printf "/listen\ns/80/7777/\n.\nw\n" | \
-      ed /etc/nginx/nginx.conf && \
-    printf "/listen\n/root\nd\ni\n\troot /srv;\n.\nw\n" | \
-      ed /etc/nginx/nginx.conf && \
-    mkdir /srv/kibana && \
-    cd /srv/kibana && tar zxvf /tmp/kibana-3.1.2.tar.gz --strip-components=1
+RUN mkdir -p /srv/kibana && \
+    cd /srv/kibana && \
+    tar zxvf /tmp/kibana.tar.gz --strip-components=1
 
 # Extra Kibana templates.
 RUN cd /usr/local/src && \
@@ -63,14 +63,11 @@ RUN cd /srv/kibana/app/dashboards && \
 # EveBox.
 RUN mkdir -p /usr/local/src/evebox && \
     cd /usr/local/src/evebox && \
-    curl -L -o - https://github.com/jasonish/evebox/archive/8b651b344681668d9e86ba052d30a8d56bede1df.tar.gz | tar zxf - --strip-components=1 && \
+    curl -L -o - https://github.com/jasonish/evebox/archive/e070affc02cc261a5bbe3dbbb0cfa192a0428cdc.tar.gz | tar zxf - --strip-components=1 && \
     cp -a app /srv/evebox
 
 RUN rpm -Uvh http://codemonkey.net/files/rpm/suricata-beta/el7/suricata-beta-release-el-7-1.el7.noarch.rpm
 RUN yum -y install suricata
-
-RUN cd /etc/suricata && \
-    curl -L -o - http://rules.emergingthreats.net/open/suricata-2.0/emerging.rules.tar.gz | tar zxvf -
 
 # Copy in the Suricata logrotate configuration.
 COPY image/etc/logrotate.d/suricata /etc/logrotate.d/suricata
@@ -87,16 +84,24 @@ RUN cd /srv && \
 RUN pip install elasticsearch-curator
 COPY image/etc/cron.daily/elasticsearch-curator /etc/cron.daily/
 
-# Link in files that are maintained outside of the container.
-RUN rm -f /etc/supervisord.conf
-RUN ln -s /image/etc/supervisord.conf /etc/supervisord.conf && \
-    ln -s /image/etc/supervisord.d /etc/supervisord.d && \
-    ln -s /image/start.sh /start.sh && \
-    ln -s /image/srv/index.html /srv/
+# Fixup Nginx to list on port 7777.
+RUN printf "/listen\ns/80/7777/\n.\nw\n" | \
+    ed /etc/nginx/nginx.conf && \
+    printf "/listen\n/root\nd\ni\n\troot /srv;\n.\nw\n" | \
+    ed /etc/nginx/nginx.conf
+
+# Enable CORS and dynamic scripting in Elastic Search.
+RUN echo "http.cors.enabled: true" >> /opt/elasticsearch/config/elasticsearch.yml
+RUN echo "script.disable_dynamic: false" >> /opt/elasticsearch/config/elasticsearch.yml
 
 # Some cleanup.
 RUN yum --noplugins clean all && \
     rm -rf /var/log/* && \
     rm -rf /tmp/*
+
+RUN rm -f /etc/supervisord.conf && \
+    ln -s /image/etc/supervisord.conf /etc/supervisord.conf && \
+    ln -s /image/start.sh /start.sh && \
+    ln -s /image/srv/index.html /srv/index.html
 
 ENTRYPOINT ["/start.sh"]
