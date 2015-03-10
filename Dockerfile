@@ -81,7 +81,7 @@ RUN mv /etc/cron.daily/logrotate /etc/cron.hourly/logrotate
 
 # Setup minimal web site.
 RUN cd /srv && \
-    curl -O -L -# http://bootswatch.com/slate/bootstrap.min.css
+    curl -O -L -# http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css
 
 # Install Elastic Search curator for optimizing and purging events.
 RUN pip install elasticsearch-curator
