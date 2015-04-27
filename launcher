@@ -5,8 +5,8 @@ set -e
 TAG="jasonish/suricata-elk"
 
 VOLUMES="-v $(pwd)/data:/data"
+VOLUMES="${VOLUMES} -v $(pwd)/data/var/log:/var/log"
 VOLUMES="${VOLUMES} -v $(pwd)/image:/image"
-VOLUMES="${VOLUMES} -v $(pwd)/data/log:/var/log"
 
 use_privileged() {
     if [ "$(getenforce 2>/dev/null)" = "Enforcing" ]; then
@@ -15,8 +15,7 @@ use_privileged() {
 }
 
 enter() {
-    pid=$(docker inspect --format {{.State.Pid}} `cat cid`)
-    exec ${SUDO} nsenter --target $pid --mount --uts --ipc --net --pid "$@"
+    docker exec -it $(cat cid) /bin/bash
 }
 
 start() {

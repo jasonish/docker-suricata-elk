@@ -1,7 +1,7 @@
 all: build
 
 build:
-	docker build -t jasonish/suricata-elk .
+	docker build -t jasonish/suricata-elk image
 
 docker-remove-containers:
 	docker ps -a -q | xargs docker rm
