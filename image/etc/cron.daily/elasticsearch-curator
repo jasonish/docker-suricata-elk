@@ -1,8 +1,18 @@
 #! /bin/sh
 
+HOST="127.0.0.1"
+TIMESTRING="%Y.%m.%d"
+PREFIX="logstash-"
+TIME_UNIT="days"
+
 DELETE_OLDER_THAN=7
 OPTIMIZE_OLDER_THAN=1
 
-curator delete --older-than ${DELETE_OLDER_THAN}
-curator optimize --older-than ${OPTIMIZE_OLDER_THAN}
+curator --host ${HOST} delete indices \
+	--older-than ${DELETE_OLDER_THAN} \
+	--timestring ${TIMESTRING} --time-unit ${TIME_UNIT}
+curator --host ${HOST} optimize indices \
+	--older-than ${OPTIMIZE_OLDER_THAN} \
+	--timestring ${TIMESTRING} --time-unit ${TIME_UNIT}
+
 
