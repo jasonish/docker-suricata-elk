@@ -96,7 +96,7 @@ RUN echo "script.disable_dynamic: false" >> /opt/elasticsearch/config/elasticsea
 
 # Some cleanup.
 RUN yum --noplugins clean all && \
-    rm -rf /var/log/* && \
+    rm -rf /var/log/* || true && \
     rm -rf /tmp/*
 
 RUN rm -f /etc/supervisord.conf && \
