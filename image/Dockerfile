@@ -16,12 +16,8 @@ RUN curl -L -v -o /tmp/kibana.tar.gz \
 RUN yum -y install \
     nginx \
     ed \
-    tcpdump \
-    cronie \
-    logrotate \
-    python-pip
+    tcpdump
 
-RUN pip install supervisor
 RUN pip install elasticsearch-curator
 
 # Create a user to run non-root applications.
