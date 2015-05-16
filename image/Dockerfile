@@ -89,7 +89,7 @@ RUN rm -f /etc/supervisord.conf && \
 
 # Some cleanup.
 RUN yum --noplugins clean all && \
-    rm -rf /var/log/* && \
+    rm -rf /var/log/* || true && \
     rm -rf /tmp/*
 
 ENTRYPOINT ["/tools/boot", "/start.sh"]
