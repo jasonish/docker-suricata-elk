@@ -1,0 +1,35 @@
+%YAML 1.1
+---
+
+# Include the default configuration file.
+include: /etc/suricata/suricata.yaml
+
+# Overrides for this Docker container.
+
+default-log-dir: /data/log/suricata
+
+outputs:
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      types:
+        - alert:
+            payload: yes
+            packet: yes
+            http: yes
+        - http:
+            extended: yes
+        - dns
+        - tls:
+            extended: yes
+        - files:
+            force-magic: yes
+            force-md5: yes
+        - ssh
+        - flow
+        - netflow
+  - stats:
+      enabled: yes
+      filename: stats.log
+      interval: 8

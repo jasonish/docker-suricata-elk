@@ -61,3 +61,5 @@ echo "If not running on localhost, its up to you to figure it out."
 echo -e "\e[0m"
 
 exec /usr/bin/supervisord -c /etc/supervisord.conf --nodaemon
+
+
