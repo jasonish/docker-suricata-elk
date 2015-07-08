@@ -1,0 +1,108 @@
+FROM fedora:22
+
+RUN dnf -y update
+
+ENV JRE_URL http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.rpm
+RUN cd /var/tmp && \
+    curl -v -O -L -b "oraclelicense=accept-securebackup-cookie" ${JRE_URL} && \
+    dnf -y install `basename ${JRE_URL}` && \
+    rm -f `basename ${JRE_URL}`
+
+ENV ES_URL https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.6.0.noarch.rpm
+RUN cd /var/tmp && \
+    curl -O -L ${ES_URL} && \
+    dnf -y install `basename ${ES_URL}` && \
+    rm -f `basename ${ES_URL}`
+
+ENV LOGSTASH_URL http://download.elastic.co/logstash/logstash/packages/centos/logstash-1.5.2-1.noarch.rpm
+RUN cd /var/tmp && \
+    curl -O -L ${LOGSTASH_URL} && \
+    dnf -y install `basename ${LOGSTASH_URL}` && \
+    rm -f `basename ${LOGSTASH_URL}`
+
+RUN dnf -y install \
+    	cronie \
+	logrotate \
+    	ed \
+    	tar \
+    	tcpdump \
+    	python-pip \
+    	nginx \
+    	python-simplejson \
+    	wget \
+    	supervisor \
+    	which \
+    	tcpdump \
+    	net-tools \
+    	procps-ng \
+    	dnf-plugins-core && \
+    dnf -y copr enable jasonish/suricata-beta && \
+    dnf -y install suricata
+
+# Create a user to run non-root applications.
+RUN useradd user
+
+# Install Kibana 3.
+RUN mkdir -p /srv/kibana && \
+    cd /srv/kibana && \
+    curl -o - -L -s http://download.elasticsearch.org/kibana/kibana/kibana-3.1.2.tar.gz | tar zxvf - --strip-components=1
+
+# Pevma's Kibana Dashboards.
+RUN cd /var/tmp && \
+    curl -o - -L https://github.com/pevma/Suricata-Logstash-Templates/archive/master.tar.gz | tar zxvf - && \
+    cd Suricata-Logstash-Templates-master/Templates && \
+    for template in *; do \
+      cp $template /srv/kibana/app/dashboards/$template.json; \
+    done
+
+# EveBox.
+ENV EVEBOX_COMMIT be8389d4ad119a1ce984718297b94daa3b0c814d
+RUN mkdir -p /usr/local/src/evebox && \
+    cd /usr/local/src/evebox && \
+    curl -L -o - https://github.com/jasonish/evebox/archive/${EVEBOX_COMMIT}.tar.gz | tar zxf - --strip-components=1 && \
+    cp -a app /srv/evebox
+
+# Setup minimal web site.
+RUN cd /srv && \
+    curl -O -L -# \
+    http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css
+
+# Install idstools for rule updates.
+RUN pip install --upgrade \
+    https://github.com/jasonish/py-idstools/archive/master.zip
+
+# Update the rules.
+RUN idstools-rulecat --rules-dir=/etc/suricata/rules
+
+# Install Elastic Search curator for optimizing and purging events.
+RUN pip install elasticsearch-curator
+
+# Fixup Nginx to list on port 7777.
+RUN printf "/listen\ns/80/7777/\n.\nw\n" | \
+    ed /etc/nginx/nginx.conf && \
+    printf "/listen\n/root\nd\ni\n\troot /srv;\n.\nw\n" | \
+    ed /etc/nginx/nginx.conf
+
+# Enable CORS and dynamic scripting in Elastic Search.
+RUN echo "http.cors.enabled: true" >> /etc/elasticsearch/elasticsearch.yml && \
+    echo "script.disable_dynamic: false" >> /etc/elasticsearch/elasticsearch.yml
+
+# Copy in files.
+COPY /etc/supervisord.d /etc/supervisord.d
+COPY /etc/logstash/conf.d /etc/logstash/conf.d
+COPY /etc/logrotate.d /etc/logrotate.d
+COPY /etc/cron.daily /etc/cron.daily
+COPY /srv /srv
+COPY /start.sh /start.sh
+RUN mv /etc/suricata/suricata.yaml /etc/suricata/suricata.yaml-default
+COPY /etc/suricata /etc/suricata
+
+# Fix permissions.
+RUN chmod 644 /etc/logrotate.d/*
+
+# Cleanup.
+RUN dnf clean all && \
+    rm -rf /var/tmp/* && \
+    find /var/log -type f -exec rm -f {} \;
+
+ENTRYPOINT ["/start.sh"]

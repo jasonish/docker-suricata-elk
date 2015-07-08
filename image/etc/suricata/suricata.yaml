@@ -2,11 +2,9 @@
 ---
 
 # Include the default configuration file.
-include: /etc/suricata/suricata.yaml
+include: /etc/suricata/suricata.yaml-default
 
 # Overrides for this Docker container.
-
-default-log-dir: /data/log/suricata
 
 outputs:
   - eve-log:
@@ -33,3 +31,12 @@ outputs:
       enabled: yes
       filename: stats.log
       interval: 8
+
+af-packet:
+  # Just define the default as we don't know what interface we will be
+  # run on.
+  - interface: default
+    threads: auto
+    use-mmap: yes
+    cluster-id: 99
+    cluster-type: cluster_flow

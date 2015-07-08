@@ -5,8 +5,7 @@ set -e
 TAG="jasonish/suricata-elk"
 
 VOLUMES="-v $(pwd)/data:/data"
-VOLUMES="${VOLUMES} -v $(pwd)/image:/image"
-VOLUMES="${VOLUMES} -v $(pwd)/data/log:/var/log"
+VOLUMES="${VOLUMES} -v $(pwd)/data/var/log/suricata:/var/log/suricata"
 
 use_privileged() {
     if [ "$(getenforce 2>/dev/null)" = "Enforcing" ]; then
@@ -15,8 +14,7 @@ use_privileged() {
 }
 
 enter() {
-    pid=$(docker inspect --format {{.State.Pid}} `cat cid`)
-    exec ${SUDO} nsenter --target $pid --mount --uts --ipc --net --pid "$@"
+    docker exec -it $(cat cid) /bin/bash
 }
 
 start() {
@@ -53,6 +51,7 @@ usage() {
     echo "  enter                   Get a shell in the running container"
     echo "  bash                    Start the container with a shell"
     echo "  pull                    Update the image"
+    echo "  build                   (Re)build the image"
     echo
 }
 
@@ -67,6 +66,10 @@ case "$1" in
 	docker run --rm --entrypoint=/bin/bash \
 	    --net=host -i -t ${PORTS} ${VOLUMES} \
 	    jasonish/suricata-elk
+	;;
+
+    build)
+	docker build --rm -t ${TAG} image
 	;;
 
     enter)
