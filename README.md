@@ -25,7 +25,7 @@ should allocate at least 2GB of memory.
 
  - git clone https://github.com/jasonish/docker-suricata-elk.git
  - cd docker-suricata-elk
- - ./launcher start -i INTERFACE
+ - ./launcher start [-i INTERFACE]
 
 Then assuming your running on your localhost, point your browser at
 http://localhost:7200.
@@ -42,4 +42,4 @@ To get a shell into the running container (may require sudo):
 
 If you wish to rebuild the image yourself simply run:
 
- - make build
+ - ./launcher build

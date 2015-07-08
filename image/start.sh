@@ -1,5 +1,7 @@
 #! /bin/sh
 
+CONTAINER_USER=user
+
 ARGS=$(getopt -o "i:" -- "$@")
 if [ $? -ne 0 ]; then
     exit 1
@@ -24,6 +26,15 @@ function find_interface() {
     ifconfig -a | egrep -o '^[a-z0-9]+' | grep -v docker | grep -v lo | head -n1
 }
 
+fix_permissions() {
+    echo "Fixing permissions."
+
+    usermod --non-unique --uid ${HOST_UID} ${CONTAINER_USER} > /dev/null 2>&1
+
+    chown -R ${CONTAINER_USER}:${CONTAINER_USER} /data/elasticsearch
+    chown -R ${CONTAINER_USER}:${CONTAINER_USER} /var/log/elasticsearch
+}
+
 if [ -z "${SURICATA_INTERFACE}" ]; then
     SURICATA_INTERFACE=$(find_interface)
     if [ -z "${SURICATA_INTERFACE}" ]; then
@@ -36,26 +47,14 @@ SURICATA_ARGS="--af-packet=${SURICATA_INTERFACE}"
 export SURICATA_ARGS
 
 if [ ! -e /data ]; then
-    echo "Error: No /data volume provided."
-    exit 1
+    echo "WARNING: /data is not a host volume. No data will be persisted."
 fi
 
 test -e /data/elasticsearch || \
-    install -d -o user -g user /data/elasticsearch
+    install -d -o ${CONTAINER_USER} -g ${CONTAINER_USER} /data/elasticsearch
 
-# Fix permissions.
-if [ "$(id -u user)" != "${HOST_UID}" ]; then
-    echo "Setting account user to uid ${HOST_UID}."
-    usermod --non-unique --uid ${HOST_UID} user
-fi
-
-if [ "$(stat --format %u /data/elasticsearch)" != "$(id -u user)" ]; then
-    echo "Fixing permissions: /data/elasticsearch."
-    chown -R user:user /data/elasticsearch
-fi
-if [ "$(stat --format %u /var/log/elasticsearch)" != "$(id -u user)" ]; then
-    echo "Fixing permissions: /var/log/elasticsearch."
-    chown -R user:user /var/log/elasticsearch
+if [ "${HOST_UID}" != "" ]; then
+    fix_permissions
 fi
 
 echo -e "\e[36m"
