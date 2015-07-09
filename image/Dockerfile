@@ -103,6 +103,7 @@ RUN chmod 644 /etc/logrotate.d/*
 # Cleanup.
 RUN dnf clean all && \
     rm -rf /var/tmp/* && \
-    find /var/log -type f -exec rm -f {} \;
+    find /var/log -type f -exec rm -f {} \; && \
+    rm -rf /tmp/* /tmp/.[A-Za-z]*
 
 ENTRYPOINT ["/start.sh"]
