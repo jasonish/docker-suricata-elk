@@ -14,6 +14,10 @@ use_privileged() {
 }
 
 enter() {
+    if [ ! -e cid ]; then
+	echo "error: container does not appear to be running."
+	exit 1
+    fi
     docker exec -it $(cat cid) /bin/bash
 }
 
@@ -34,12 +38,8 @@ start() {
 	$(use_privileged) --rm --cidfile=cid --net=host -i -t ${PORTS} \
 	${VOLUMES} \
 	-e HOST_UID=$(id -u) \
-	jasonish/suricata-elk "$@"
+	${TAG} "$@"
     rm -f cid
-}
-
-pull() {
-    docker pull ${TAG}
 }
 
 usage() {
@@ -64,8 +64,7 @@ case "$1" in
 
     bash)
 	docker run --rm --entrypoint=/bin/bash \
-	    --net=host -i -t ${PORTS} ${VOLUMES} \
-	    jasonish/suricata-elk
+	    --net=host -i -t ${VOLUMES} ${TAG}
 	;;
 
     build)
@@ -81,7 +80,7 @@ case "$1" in
 	;;
 
     pull)
-	pull
+	docker pull ${TAG}
 	;;
 
     *)
