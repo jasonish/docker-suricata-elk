@@ -2,13 +2,7 @@ FROM fedora:22
 
 RUN dnf -y update
 
-ENV JRE_URL http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.rpm
-RUN cd /var/tmp && \
-    curl -v -O -L -b "oraclelicense=accept-securebackup-cookie" ${JRE_URL} && \
-    dnf -y install `basename ${JRE_URL}` && \
-    rm -f `basename ${JRE_URL}`
-
-ENV ES_URL https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.6.0.noarch.rpm
+ENV ES_URL https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.6.2.noarch.rpm
 RUN cd /var/tmp && \
     curl -O -L ${ES_URL} && \
     dnf -y install `basename ${ES_URL}` && \
@@ -35,8 +29,11 @@ RUN dnf -y install \
     	tcpdump \
     	net-tools \
     	procps-ng \
+	hostname \
+	java-1.8.0-openjdk-headless \
+	findutils \
     	dnf-plugins-core && \
-    dnf -y copr enable jasonish/suricata-beta && \
+    dnf -y copr enable jasonish/suricata-beta-2.1 && \
     dnf -y install suricata
 
 # Create a user to run non-root applications.
@@ -49,7 +46,7 @@ RUN mkdir -p /srv/kibana && \
 
 # Pevma's Kibana Dashboards.
 RUN cd /var/tmp && \
-    curl -o - -L https://github.com/pevma/Suricata-Logstash-Templates/archive/master.tar.gz | tar zxvf - && \
+    curl -o - -L http://github.com/pevma/Suricata-Logstash-Templates/archive/master.tar.gz | tar zxvf - && \
     cd Suricata-Logstash-Templates-master/Templates && \
     for template in *; do \
       cp $template /srv/kibana/app/dashboards/$template.json; \
@@ -59,7 +56,7 @@ RUN cd /var/tmp && \
 ENV EVEBOX_COMMIT be8389d4ad119a1ce984718297b94daa3b0c814d
 RUN mkdir -p /usr/local/src/evebox && \
     cd /usr/local/src/evebox && \
-    curl -L -o - https://github.com/jasonish/evebox/archive/${EVEBOX_COMMIT}.tar.gz | tar zxf - --strip-components=1 && \
+    curl -L -o - http://github.com/jasonish/evebox/archive/${EVEBOX_COMMIT}.tar.gz | tar zxf - --strip-components=1 && \
     cp -a app /srv/evebox
 
 # Setup minimal web site.
@@ -69,7 +66,7 @@ RUN cd /srv && \
 
 # Install idstools for rule updates.
 RUN pip install --upgrade \
-    https://github.com/jasonish/py-idstools/archive/master.zip
+    http://github.com/jasonish/py-idstools/archive/master.zip
 
 # Update the rules.
 RUN idstools-rulecat --rules-dir=/etc/suricata/rules
