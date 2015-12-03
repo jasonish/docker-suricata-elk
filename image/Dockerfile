@@ -1,6 +1,4 @@
-FROM fedora:22
-
-RUN dnf -y update
+FROM fedora:23
 
 ENV ES_URL https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.6.2.noarch.rpm
 RUN cd /var/tmp && \
@@ -33,7 +31,7 @@ RUN dnf -y install \
 	java-1.8.0-openjdk-headless \
 	findutils \
     	dnf-plugins-core && \
-    dnf -y copr enable jasonish/suricata-beta-2.1 && \
+    dnf -y copr enable jasonish/suricata-beta && \
     dnf -y install suricata
 
 # Create a user to run non-root applications.
