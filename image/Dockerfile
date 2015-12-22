@@ -1,16 +1,7 @@
 FROM fedora:23
 
-ENV ES_URL https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.6.2.noarch.rpm
-RUN cd /var/tmp && \
-    curl -O -L ${ES_URL} && \
-    dnf -y install `basename ${ES_URL}` && \
-    rm -f `basename ${ES_URL}`
-
-ENV LOGSTASH_URL http://download.elastic.co/logstash/logstash/packages/centos/logstash-1.5.2-1.noarch.rpm
-RUN cd /var/tmp && \
-    curl -O -L ${LOGSTASH_URL} && \
-    dnf -y install `basename ${LOGSTASH_URL}` && \
-    rm -f `basename ${LOGSTASH_URL}`
+RUN dnf -y install https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.7.4.noarch.rpm && \
+    dnf -y install https://download.elastic.co/logstash/logstash/packages/centos/logstash-1.5.6-1.noarch.rpm
 
 RUN dnf -y install \
     	cronie \
