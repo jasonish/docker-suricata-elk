@@ -64,10 +64,17 @@ RUN idstools-rulecat --rules-dir=/etc/suricata/rules
 RUN pip install elasticsearch-curator
 
 # Fixup Nginx to list on port 7777.
-RUN printf "/listen\ns/80/7777/\n.\nw\n" | \
-    ed /etc/nginx/nginx.conf && \
-    printf "/listen\n/root\nd\ni\n\troot /srv;\n.\nw\n" | \
-    ed /etc/nginx/nginx.conf
+RUN printf "\
+/listen\n\
+s/80/7777\n\
+/listen\n\
+s/80/7777\n\
+/root\n\
+d\n\
+i\n\
+\troot\t/srv;\n\
+.\n\
+w\n" | ed /etc/nginx/nginx.conf
 
 # Enable CORS and dynamic scripting in Elastic Search.
 RUN echo "http.cors.enabled: true" >> /etc/elasticsearch/elasticsearch.yml && \
