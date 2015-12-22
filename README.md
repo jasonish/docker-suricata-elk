@@ -1,5 +1,9 @@
 ## About
 
+**NOTE: This Docker image is based around pre 2.0 Elastic Search and
+  Kibana 3. It will likely be superceded by a docker-compose setup in
+  the near future.**
+
 A Docker image with Suricata and the ELK (Elastic Search, Logstash,
 Kibana).
 
