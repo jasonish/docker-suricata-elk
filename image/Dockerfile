@@ -22,7 +22,7 @@ RUN dnf -y install \
 	java-1.8.0-openjdk-headless \
 	findutils \
     	dnf-plugins-core && \
-    dnf -y copr enable jasonish/suricata-beta && \
+    dnf -y copr enable jasonish/suricata-stable && \
     dnf -y install suricata
 
 # Create a user to run non-root applications.
