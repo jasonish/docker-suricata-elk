@@ -2,7 +2,8 @@
 
 **NOTE: This Docker image is based around pre 2.0 Elastic Search and
   Kibana 3. It will likely be superceded by a docker-compose setup in
-  the near future.**
+  the near future. Until then I highly suggest checking out 
+  [Amsterdam](https://github.com/StamusNetworks/Amsterdam) as an alternative.**
 
 A Docker image with Suricata and the ELK (Elastic Search, Logstash,
 Kibana).
